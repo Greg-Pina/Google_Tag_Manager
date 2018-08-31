@@ -5,6 +5,7 @@
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.codec.language.bm.Rule;
@@ -15,6 +16,7 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -45,6 +47,7 @@ public class GoogleTagManager {
 
 	  public static void main(String[] args) {
 	    try {
+	    	
 	      httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 	      dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
 
@@ -57,7 +60,7 @@ public class GoogleTagManager {
 	      String accountId = "192727684700-8la3489rcmo8671ruec7n71ftqijg11n.apps.googleusercontent.com";
 
 	      // Find the Greg_Pina_Test container.
-	      Container Greg_Pina_Test = findGreetingsContainer(manager, accountId);
+	      Container Greg_Pina_Test = findContainer(manager, accountId);
 	      String containerId = Greg_Pina_Test.getContainerId();
 
 	      // Create the Google Tag Manager tag.
@@ -95,8 +98,8 @@ public class GoogleTagManager {
 		  tag.setParameter(Arrays.asList(arg0, arg1));
 
 		  try {
-		    Tag response = tagmanager.accounts().containers().
-		        tags().create("123456", "54321", tag).execute();
+		    Tag response = manager.accounts().containers().workspaces().
+		        tags().create("123456", tag).execute();
 
 		  } catch (GoogleJsonResponseException e) {
 		    System.err.println("There was a service error: "
@@ -131,15 +134,15 @@ public class GoogleTagManager {
 	   * @return the Greg_Pina_Test container if it exists.
 	   *
 	   */
-	  private static Container findGreetingsContainer(TagManager service, String accountId)
+	  private static Container findContainer(TagManager service, String accountId)
 	      throws Exception {
 	    for (Container container :
 	        service.accounts().containers().list(accountId).execute().getContainer()) {
-	      if (container.getName().equals("Greetings")) {
+	      if (container.getName().equals("Greg_Pina")) {
 	        return container;
 	      }
 	    }
-	    throw new IllegalArgumentException("No container named Greetings in given account");
+	    throw new IllegalArgumentException("No container named Greg_Pina in given account");
 	  }
 
 	  /**
@@ -150,6 +153,7 @@ public class GoogleTagManager {
 	   * @param service the Tag Manager service object.
 	   * @return the newly created Tag resource.
 	   */
+	  
 	  private static Tag createGoogleTagManagerTag(String accountId, String containerId, TagManager service) {
 	    Tag ua = new Tag();
 	    ua.setName("Universal Analytics Google Tag Manager");
@@ -161,9 +165,14 @@ public class GoogleTagManager {
 	    uaParams.add(trackingId);
 	    
 	    ua.setParameter(uaParams);
-	    ua = service.accounts().containers().tag().create(accountId, containerId, ua)
+	    ua = service.accounts().containers().tags().create(accountId, containerId, ua)
 	        .execute();
-
+	    
+	    Parameter arg0 = new Parameter();
+	    arg0.setType("template");
+	    arg0.setKey("trackingID");
+	    arg0.setValue("GTM-WCDFNG9");
+	    	    
 	    return ua;
 	  }
 
